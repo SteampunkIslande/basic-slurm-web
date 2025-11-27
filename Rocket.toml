@@ -1,0 +1,12 @@
+[default]
+address = "127.0.0.1"
+log_level = "normal"
+max_blocking = 512
+port = 8080
+workers = 12
+ident = "Slurm-Web"
+ip_header = "X-Real-IP"
+keep_alive = 5
+ctrlc = true
+cli_colors = true
+template_dir = "static/templates"
