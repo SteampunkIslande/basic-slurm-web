@@ -7,6 +7,7 @@ use std::io::{BufRead, BufReader};
 use std::process::Command;
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
 #[macro_use]
 extern crate rocket;
@@ -45,7 +46,10 @@ fn squeue(jobname: Option<String>) -> Option<Value> {
                 let mut job: HashMap<String, String> = HashMap::new();
                 for (i, field) in fields.iter().enumerate() {
                     if let Some(value) = values.get(i) {
-                        job.insert(field.to_string(), value.to_string());
+                        // Ignore field with no name
+                        if !field.to_string().is_empty() {
+                            job.insert(field.to_string(), value.to_string());
+                        }
                     }
                 }
                 res.insert(
@@ -60,18 +64,61 @@ fn squeue(jobname: Option<String>) -> Option<Value> {
         }
     } else {
         // Mock data
-        Some(json!({
-            "1234": {"JOBID": "1234", "JOBNAME": "ml_training", "USER": "alice", "PARTITION": "gpu", "STATE": "RUNNING", "TIME": "2:15:30", "NODES": "1", "NODELIST": "gpu-node01", "CPUS": "8", "MEM": "32G", "TIMELIMIT": "24:00:00", "COMMENT": "Training ResNet model on ImageNet"},
-            "5678": {"JOBID": "5678", "JOBNAME": "data_processing", "USER": "bob", "PARTITION": "cpu", "STATE": "PENDING", "TIME": "0:00:00", "NODES": "2", "NODELIST": "(null)", "CPUS": "16", "MEM": "64G", "TIMELIMIT": "12:00:00", "COMMENT": "Waiting for resources"},
-            "9012": {"JOBID": "9012", "JOBNAME": "simulation", "USER": "charlie", "PARTITION": "hpc", "STATE": "COMPLETED", "TIME": "8:45:12", "NODES": "4", "NODELIST": "hpc-[001-004]", "CPUS": "128", "MEM": "256G", "TIMELIMIT": "10:00:00", "COMMENT": "Molecular dynamics simulation finished successfully"},
-            "3456": {"JOBID": "3456", "JOBNAME": "failed_job", "USER": "david", "PARTITION": "debug", "STATE": "FAILED", "TIME": "0:05:23", "NODES": "1", "NODELIST": "debug-node01", "CPUS": "2", "MEM": "4G", "TIMELIMIT": "0:30:00", "COMMENT": "Out of memory error"},
-            "7890": {"JOBID": "7890", "JOBNAME": "big_computation", "USER": "eve", "PARTITION": "cpu", "STATE": "CANCELLED", "TIME": "1:30:45", "NODES": "8", "NODELIST": "cpu-[010-017]", "CPUS": "256", "MEM": "512G", "TIMELIMIT": "48:00:00", "COMMENT": "Cancelled by user request"},
-            "1111": {"JOBID": "1111", "JOBNAME": "test_script", "USER": "alice", "PARTITION": "debug", "STATE": "TIMEOUT", "TIME": "0:30:00", "NODES": "1", "NODELIST": "debug-node02", "CPUS": "1", "MEM": "2G", "TIMELIMIT": "0:30:00", "COMMENT": "Job exceeded time limit"},
-            "2222": {"JOBID": "2222", "JOBNAME": "array_job", "USER": "bob", "PARTITION": "gpu", "STATE": "RUNNING", "TIME": "1:22:18", "NODES": "2", "NODELIST": "gpu-[node02-node03]", "CPUS": "16", "MEM": "128G", "TIMELIMIT": "6:00:00", "COMMENT": "Parameter sweep in progress"},
-            "3333": {"JOBID": "3333", "JOBNAME": "backup_task", "USER": "system", "PARTITION": "maintenance", "STATE": "SUSPENDED", "TIME": "0:12:05", "NODES": "1", "NODELIST": "storage-node01", "CPUS": "4", "MEM": "8G", "TIMELIMIT": "2:00:00", "COMMENT": "Suspended for maintenance window"},
-            "4444": {"JOBID": "4444", "JOBNAME": "neural_net", "USER": "charlie", "PARTITION": "gpu", "STATE": "PENDING", "TIME": "0:00:00", "NODES": "1", "NODELIST": "(null)", "CPUS": "32", "MEM": "128G", "TIMELIMIT": "72:00:00", "COMMENT": "Priority: high priority job"},
-            "5555": {"JOBID": "5555", "JOBNAME": "preprocessing", "USER": "eve", "PARTITION": "cpu", "STATE": "CONFIGURING", "TIME": "0:00:00", "NODES": "1", "NODELIST": "cpu-008", "CPUS": "8", "MEM": "16G", "TIMELIMIT": "4:00:00", "COMMENT": "Setting up environment"}
-        }))
+        Value::from_str(
+            r#"{
+          "4725": {
+            "ACCOUNT": "urgent",
+            "ARRAY_JOB_ID": "4725",
+            "ARRAY_TASK_ID": "N/A",
+            "COMMAND": "(null)",
+            "COMMENT": "(null)",
+            "CONTIGUOUS": "0",
+            "CORES_PER_SOCKET": "*",
+            "CORE_SPEC": "N/A",
+            "CPUS": "28",
+            "DEPENDENCY": "(null)",
+            "END_TIME": "NONE",
+            "EXC_NODES": "",
+            "EXEC_HOST": "slurm-gpu04",
+            "FEATURES": "(null)",
+            "GROUP": "1004",
+            "JOBID": "4725",
+            "LICENSES": "(null)",
+            "MIN_CPUS": "28",
+            "MIN_MEMORY": "256G",
+            "MIN_TMP_DISK": "0",
+            "NAME": "wrap",
+            "NICE": "0",
+            "NODELIST": "slurm-gpu04",
+            "NODELIST(REASON)": "slurm-gpu04",
+            "NODES": "1",
+            "OVER_SUBSCRIBE": "OK",
+            "PARTITION": "GENOMIQUE-CPU",
+            "PRIORITY": "4294897553",
+            "QOS": "urgent",
+            "REASON": "None",
+            "REQ_NODES": "",
+            "RESERVATION": "(null)",
+            "S:C:T": "*:*:*",
+            "SCHEDNODES": "(null)",
+            "SOCKETS_PER_NODE": "*",
+            "ST": "R",
+            "START_TIME": "2025-11-28T10:20:05",
+            "STATE": "RUNNING",
+            "SUBMIT_TIME": "2025-11-28T10:20:04",
+            "THREADS_PER_CORE": "*",
+            "TIME": "34:07",
+            "TIME_LEFT": "UNLIMITED",
+            "TIME_LIMIT": "UNLIMITED",
+            "TRES_PER_NODE": "gres:gpu:a100:2",
+            "UID": "1001",
+            "USER": "charles",
+            "WCKEY": "(null)",
+            "WORK_DIR": "/some/work/directory"
+          }
+        }"#,
+        )
+        .ok()
     }
 }
 
