@@ -12,15 +12,24 @@
     <div class="container">
         <h1>🖥️ Slurm Queue Status</h1>
 
+
+
         <div id="error-container"></div>
 
-        <div class="field-selector">
-            <label for="field-preset">Sélection de champs :</label>
-            <select id="field-preset" onchange="applyFieldPreset()">
-                <option value="">Tous les champs</option>
-                <option value="QOS,STATE,USER,TIME">Survol rapide</option>
-            </select>
+        <div class="controls-bar">
+            <div class="field-selector">
+                <label for="field-preset">Sélection de champs :</label>
+                <select id="field-preset" onchange="applyFieldPreset()">
+                    <option value="">Tous les champs</option>
+                    <option value="QOS,STATE,USER,TIME">Survol rapide</option>
+                </select>
+            </div>
+            <div class="refresh-controls">
+                <button id="refresh-btn" onclick="refreshData()">🔄 Actualiser</button>
+            </div>
         </div>
+
+
 
         <div class="table-container">
             <div id="loading" class="loading">Chargement des données</div>
@@ -63,6 +72,11 @@
         function hideLoading() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('squeue-table').style.display = 'table';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('squeue-table').style.display = 'none';
         }
 
         // Fonction pour obtenir une classe CSS pour l'état
@@ -140,6 +154,9 @@
                 // Construire l'URL de l'endpoint avec tous les paramètres
                 const apiUrl = `/squeue?${urlParams.toString()}`;
 
+                // Afficher un message de chargement
+                showLoading();
+
                 const response = await fetch(apiUrl);
                 if (!response.ok) {
                     throw new Error(`Erreur HTTP: ${response.status}`);
@@ -158,8 +175,8 @@
                     generateTable();
                     hideLoading();
                 } else {
-                    hideLoading();
                     showNoResults();
+                    hideLoading();
                 }
             } catch (error) {
                 console.error('Erreur lors du chargement des données:', error);
@@ -273,16 +290,26 @@
             renderTableBody();
         }
 
-        // Fonction de rafraîchissement automatique
-        function startAutoRefresh() {
-            // Rafraîchir toutes les 30 secondes
-            setInterval(async () => {
-                try {
-                    await loadData();
-                } catch (error) {
-                    console.error('Erreur lors du rafraîchissement automatique:', error);
-                }
-            }, 30000);
+        // Fonction de rafraîchissement manuel
+        async function refreshData() {
+            const refreshBtn = document.getElementById('refresh-btn');
+            const originalText = refreshBtn.innerHTML;
+
+            // Désactiver le bouton et afficher un indicateur de chargement
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '⏳ Actualisation...';
+
+            try {
+                await loadData();
+                applyFieldPreset();
+                filterTable();
+            } catch (error) {
+                console.error('Erreur lors du rafraîchissement:', error);
+            } finally {
+                // Réactiver le bouton
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalText;
+            }
         }
 
         // Fonction de gestion des erreurs réseau
@@ -290,31 +317,11 @@
             showError('Impossible de se connecter au serveur. Vérifiez votre connexion réseau.');
         }
 
-        // Fonction pour ajouter des raccourcis clavier
-        function addKeyboardShortcuts() {
-            document.addEventListener('keydown', function (event) {
-                // Ctrl/Cmd + R pour rafraîchir
-                if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
-                    event.preventDefault();
-                    location.reload();
-                }
-
-                // Échap pour effacer tous les filtres
-                if (event.key === 'Escape') {
-                    document.querySelectorAll('.search-input').forEach(input => {
-                        input.value = '';
-                    });
-                    filteredData = { ...jobsData };
-                    renderTableBody();
-                }
-            });
-        }
-
         // Initialisation au chargement de la page
         document.addEventListener('DOMContentLoaded', async function () {
             await loadData();
-            await addKeyboardShortcuts();
-            await startAutoRefresh();
+            applyFieldPreset();
+            filterTable();
         });
 
         // Gestion des erreurs globales

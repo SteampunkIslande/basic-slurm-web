@@ -220,19 +220,31 @@ td {
     border: 1px solid #a0aec0;
 }
 
-/* Styles pour la sélection de champs */
-.field-selector {
+/* Barre de contrôles horizontale */
+.controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     margin-bottom: 1rem;
     padding: 1rem;
     background: #f7fafc;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+}
+
+/* Styles pour la sélection de champs */
+.field-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .field-selector label {
     font-weight: 600;
     color: #4a5568;
-    margin-right: 0.5rem;
+    white-space: nowrap;
 }
 
 .field-selector select {
@@ -250,6 +262,67 @@ td {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Styles pour les contrôles de rafraîchissement */
+.refresh-controls {
+    display: flex;
+    align-items: center;
+}
+
+#refresh-btn {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+#refresh-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+#refresh-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+#refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive design pour la barre de contrôles */
+@media (max-width: 768px) {
+    .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .field-selector {
+        justify-content: center;
+    }
+    
+    .refresh-controls {
+        justify-content: center;
+    }
+    
+    #refresh-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* Responsive design */
