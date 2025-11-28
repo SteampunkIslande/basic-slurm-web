@@ -14,6 +14,14 @@
 
         <div id="error-container"></div>
 
+        <div class="field-selector">
+            <label for="field-preset">Sélection de champs :</label>
+            <select id="field-preset" onchange="applyFieldPreset()">
+                <option value="">Tous les champs</option>
+                <option value="QOS,STATE,USER,TIME">Survol rapide</option>
+            </select>
+        </div>
+
         <div class="table-container">
             <div id="loading" class="loading">Chargement des données</div>
 
@@ -42,6 +50,8 @@
         let jobsData = {};
         let filteredData = {};
         let columnNames = [];
+        let visibleColumns = []; // Colonnes actuellement visibles
+        let allColumns = []; // Toutes les colonnes disponibles
 
         // Fonction pour afficher les erreurs
         function showError(message) {
@@ -88,11 +98,31 @@
             }
         }
 
+        // Fonction pour obtenir une classe CSS pour le QOS
+        function getQosClass(qos) {
+            const qosLower = qos.toLowerCase();
+            switch (qosLower) {
+                case 'urgent':
+                    return 'qos-urgent';
+                case 'routine':
+                    return 'qos-routine';
+                case 'recherche':
+                    return 'qos-recherche';
+                case 'dev':
+                    return 'qos-dev';
+                default:
+                    return '';
+            }
+        }
+
         // Fonction pour formater une valeur de cellule
         function formatCellValue(columnName, value) {
             if (columnName === 'STATE') {
                 const statusClass = getStatusClass(value);
                 return `<span class="status-badge ${statusClass}">${value}</span>`;
+            } else if (columnName === 'QOS') {
+                const qosClass = getQosClass(value);
+                return `<span class="qos-badge ${qosClass}">${value}</span>`;
             }
             return value;
         }
@@ -122,7 +152,9 @@
                 // Extraire les noms de colonnes du premier job
                 const firstJobId = Object.keys(data)[0];
                 if (firstJobId) {
-                    columnNames = Object.keys(data[firstJobId]);
+                    allColumns = Object.keys(data[firstJobId]);
+                    columnNames = [...allColumns]; // Par défaut, toutes les colonnes sont visibles
+                    visibleColumns = [...allColumns];
                     generateTable();
                     hideLoading();
                 } else {
@@ -141,11 +173,11 @@
             const headersRow = document.getElementById('headers-row');
             const filtersRow = document.getElementById('filters-row');
 
-            // Générer les en-têtes
-            headersRow.innerHTML = columnNames.map(col => `<th>${col}</th>`).join('');
+            // Générer les en-têtes avec les colonnes visibles
+            headersRow.innerHTML = visibleColumns.map(col => `<th>${col}</th>`).join('');
 
-            // Générer les filtres
-            filtersRow.innerHTML = columnNames.map(col =>
+            // Générer les filtres avec les colonnes visibles
+            filtersRow.innerHTML = visibleColumns.map(col =>
                 `<th><input type="text" class="search-input" placeholder="Rechercher..." data-column="${col}" oninput="filterTable()"></th>`
             ).join('');
 
@@ -169,7 +201,7 @@
 
             tableBody.innerHTML = jobIds.map(jobId => {
                 const job = filteredData[jobId];
-                const cells = columnNames.map(col =>
+                const cells = visibleColumns.map(col =>
                     `<td>${formatCellValue(col, job[col] || '')}</td>`
                 ).join('');
                 return `<tr>${cells}</tr>`;
@@ -185,6 +217,22 @@
         // Fonction pour cacher le message "aucun résultat"
         function hideNoResults() {
             document.getElementById('no-results').style.display = 'none';
+        }
+
+        // Fonction pour appliquer un preset de champs
+        function applyFieldPreset() {
+            const preset = document.getElementById('field-preset').value;
+
+            if (preset === '') {
+                // Afficher toutes les colonnes
+                visibleColumns = [...allColumns];
+            } else {
+                // Afficher seulement les colonnes sélectionnées
+                visibleColumns = preset.split(',');
+            }
+
+            // Régénérer le tableau avec les nouvelles colonnes
+            generateTable();
         }
 
         // Fonction de filtrage du tableau
@@ -263,10 +311,10 @@
         }
 
         // Initialisation au chargement de la page
-        document.addEventListener('DOMContentLoaded', function () {
-            loadData();
-            addKeyboardShortcuts();
-            startAutoRefresh();
+        document.addEventListener('DOMContentLoaded', async function () {
+            await loadData();
+            await addKeyboardShortcuts();
+            await startAutoRefresh();
         });
 
         // Gestion des erreurs globales
