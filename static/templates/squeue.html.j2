@@ -21,7 +21,7 @@
                 <label for="field-preset">Sélection de champs :</label>
                 <select id="field-preset" onchange="applyFieldPreset()">
                     <option value="">Tous les champs</option>
-                    <option value="QOS,STATE,USER,TIME">Survol rapide</option>
+                    <!-- Les options seront ajoutées dynamiquement depuis field_presets.json -->
                 </select>
             </div>
             <div class="refresh-controls">
@@ -61,6 +61,7 @@
         let columnNames = [];
         let visibleColumns = []; // Colonnes actuellement visibles
         let allColumns = []; // Toutes les colonnes disponibles
+        let fieldPresets = {}; // Presets de champs chargés depuis le JSON
 
         // Fonction pour afficher les erreurs
         function showError(message) {
@@ -139,6 +140,61 @@
                 return `<span class="qos-badge ${qosClass}">${value}</span>`;
             }
             return value;
+        }
+
+        // Fonction pour charger les presets de champs depuis le JSON
+        async function loadFieldPresets() {
+            try {
+                const response = await fetch('/static/field_presets.json');
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                fieldPresets = await response.json();
+                populatePresetSelect();
+            } catch (error) {
+                console.error('Erreur lors du chargement des presets:', error);
+                // Utiliser un preset par défaut si le fichier ne peut pas être chargé
+                fieldPresets = {
+                    "__default__": {
+                        "name": "Surveillance administrateur",
+                        "fields": [
+                            "JOBID",
+                            "STATE",
+                            "QOS",
+                            "TIME",
+                            "CPUS",
+                            "MIN_MEMORY",
+                            "COMMENT",
+                            "ACCOUNT",
+                            "NODELIST",
+                            "TRES_PER_NODE"
+                        ]
+                    }
+                };
+                populatePresetSelect();
+            }
+        }
+
+        // Fonction pour remplir la liste déroulante des presets
+        function populatePresetSelect() {
+            const selectElement = document.getElementById('field-preset');
+
+            // Garder l'option "Tous les champs"
+            selectElement.innerHTML = '<option value="">Tous les champs</option>';
+
+            // Ajouter les presets depuis le JSON
+            Object.keys(fieldPresets).forEach(presetKey => {
+                const preset = fieldPresets[presetKey];
+                const option = document.createElement('option');
+                option.value = presetKey;
+                option.textContent = preset.name || presetKey.replace('_', ' ');
+                selectElement.appendChild(option);
+            });
+
+            // Sélectionner le preset __default__ s'il existe
+            if (fieldPresets['__default__']) {
+                selectElement.value = '__default__';
+            }
         }
 
         // Fonction pour charger les données depuis l'API
@@ -244,8 +300,16 @@
                 // Afficher toutes les colonnes
                 visibleColumns = [...allColumns];
             } else {
-                // Afficher seulement les colonnes sélectionnées
-                visibleColumns = preset.split(',');
+                // Utiliser les champs du preset depuis le JSON
+                if (fieldPresets[preset] && fieldPresets[preset].fields) {
+                    visibleColumns = fieldPresets[preset].fields.filter(col => allColumns.includes(col));
+                } else if (fieldPresets[preset] && Array.isArray(fieldPresets[preset])) {
+                    // Fallback pour l'ancien schéma (array direct)
+                    visibleColumns = fieldPresets[preset].filter(col => allColumns.includes(col));
+                } else {
+                    // Fallback pour l'ancien système (split par virgule)
+                    visibleColumns = preset.split(',');
+                }
             }
 
             // Régénérer le tableau avec les nouvelles colonnes
@@ -319,6 +383,7 @@
 
         // Initialisation au chargement de la page
         document.addEventListener('DOMContentLoaded', async function () {
+            await loadFieldPresets();
             await loadData();
             applyFieldPreset();
             filterTable();

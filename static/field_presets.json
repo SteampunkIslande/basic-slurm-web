@@ -1,0 +1,17 @@
+{
+  "__default__": {
+    "name": "Surveillance administrateur",
+    "fields": [
+      "JOBID",
+      "STATE",
+      "QOS",
+      "TIME",
+      "CPUS",
+      "MIN_MEMORY",
+      "COMMENT",
+      "ACCOUNT",
+      "NODELIST",
+      "TRES_PER_NODE"
+    ]
+  }
+}
