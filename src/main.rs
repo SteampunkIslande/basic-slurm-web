@@ -20,7 +20,7 @@ enum SlurmWebResponse {
     JSON(Json<Value>),
 }
 
-fn squeue(jobname: Option<String>) -> Option<Value> {
+fn squeue(jobname: Option<String>, state: Option<String>) -> Option<Value> {
     let base_args = vec!["-a", "-o", "%all"];
     let args: Vec<&str> = base_args
         .into_iter()
@@ -28,7 +28,15 @@ fn squeue(jobname: Option<String>) -> Option<Value> {
             jobname
                 .as_ref()
                 .map(|name| vec!["-n", name.as_str()])
-                .unwrap_or_default(),
+                .into_iter()
+                .flatten(),
+        )
+        .chain(
+            state
+                .as_ref()
+                .map(|state| vec!["-t", state.as_str()])
+                .into_iter()
+                .flatten(),
         )
         .collect();
 
@@ -122,11 +130,15 @@ fn squeue(jobname: Option<String>) -> Option<Value> {
     }
 }
 
-#[get("/squeue?<format>&<jobname>")]
-fn squeue_get(format: Option<String>, jobname: Option<String>) -> SlurmWebResponse {
+#[get("/squeue?<format>&<jobname>&<state>")]
+fn squeue_get(
+    format: Option<String>,
+    jobname: Option<String>,
+    state: Option<String>,
+) -> SlurmWebResponse {
     let format = format.unwrap_or("json".to_string());
 
-    if let Some(json) = squeue(jobname) {
+    if let Some(json) = squeue(jobname, state) {
         match format.as_str() {
             "json" => SlurmWebResponse::JSON(Json(json)),
             "html" => SlurmWebResponse::HTML(Template::render("squeue", context! {})),
