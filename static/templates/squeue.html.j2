@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slurm Queue Status</title>
-    <link rel="stylesheet" href="/static/default.css">
+    <link rel="stylesheet" href="/squeue/static/default.css">
 </head>
 
 <body>
@@ -145,7 +145,7 @@
         // Fonction pour charger les presets de champs depuis le JSON
         async function loadFieldPresets() {
             try {
-                const response = await fetch('/static/field_presets.json');
+                const response = await fetch('/squeue/static/field_presets.json');
                 if (!response.ok) {
                     throw new Error(`Erreur HTTP: ${response.status}`);
                 }

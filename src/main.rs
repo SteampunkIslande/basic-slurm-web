@@ -156,7 +156,7 @@ fn squeue_get(
 #[launch]
 async fn rocket() -> _ {
     rocket::build()
-        .mount("/static", FileServer::from("./static"))
+        .mount("/squeue/static", FileServer::from("./static"))
         .mount("/", routes![squeue_get])
         .attach(Template::fairing())
 }
